@@ -1,0 +1,504 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&family=JetBrains+Mono:wght@100;200;300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    overflow-x: hidden;
+    text-size-adjust: 100%;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  body {
+    background-color: #0d0d0d;
+    color: #f5f5f5;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+    cursor: none; /* Hide standard cursor for GSAP Custom Cursor */
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button,
+  a {
+    overflow-wrap: anywhere;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Smooth scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0d0d0d;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #262626;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #404040;
+  }
+}
+
+/* Custom styles for elite receipt (ticket de caisse) print aesthetics */
+.receipt-paper {
+  background-color: #ffffff;
+  color: #000000;
+  font-family: var(--font-mono);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.receipt-zig-zag {
+  position: relative;
+}
+
+.receipt-zig-zag::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(-45deg, #ffffff 4px, transparent 0), linear-gradient(45deg, #ffffff 4px, transparent 0);
+  background-size: 8px 8px;
+  background-position: left bottom;
+}
+
+/* Hide custom cursor on touch devices */
+@media (hover: none) {
+  body {
+    cursor: auto !important;
+  }
+  .custom-cursor {
+    display: none !important;
+  }
+
+  .cursor-none {
+    cursor: auto !important;
+  }
+}
+
+/* Responsive hardening for the highly editorial layout */
+#hero-title {
+  font-size: clamp(3rem, 13vw, 8rem);
+  overflow-wrap: anywhere;
+}
+
+#home-view h2,
+#cart-view h1,
+#profile-view h1,
+#contact-view h1,
+#info-view h1,
+#admin-hub-view h1 {
+  overflow-wrap: anywhere;
+}
+
+#home-view button,
+#cart-view button,
+#profile-view button,
+#contact-view button,
+#info-view button,
+#admin-hub-view button,
+#order-wizard button {
+  white-space: normal;
+}
+
+#order-wizard,
+#order-wizard > div {
+  min-height: 100vh;
+}
+
+#wizard-live-sidebar,
+#ticket-de-caisse-panel,
+#admin-right-workspace,
+#ingredients-selection-deck,
+#cart-items-deck {
+  min-width: 0;
+}
+
+@media (max-width: 1023px), (max-height: 860px) {
+  #order-wizard {
+    height: auto !important;
+    overflow: visible !important;
+    padding-bottom: 2rem;
+  }
+
+  #order-wizard > div,
+  #ingredients-selection-deck {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  #wizard-live-sidebar {
+    max-width: 30rem;
+    width: 100%;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  #main-header .max-w-7xl,
+  #home-view .max-w-7xl,
+  #cart-view .max-w-7xl,
+  #profile-view .max-w-7xl,
+  #contact-view .max-w-7xl,
+  #info-view .max-w-5xl,
+  #admin-hub-view .max-w-7xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  #home-view {
+    padding-top: 4.5rem;
+  }
+
+  #hero-parallax-section {
+    min-height: calc(100svh - 4.5rem);
+    padding-block: 4rem 3rem;
+  }
+
+  #hero-parallax-section .inline-flex,
+  #biotech-interactive-lab .inline-flex,
+  #contact-view .inline-flex,
+  #cart-view .inline-flex {
+    max-width: 100%;
+    align-items: flex-start;
+    white-space: normal;
+    text-align: left;
+    line-height: 1.5;
+  }
+
+  #hero-parallax-section .flex-col button,
+  #athlete-cta-section button,
+  #checkout-trigger,
+  #contact-registry-form button[type="submit"],
+  #profile-editor-form button[type="submit"] {
+    width: 100%;
+    justify-content: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    letter-spacing: 0.12em;
+  }
+
+  #biotech-interactive-lab .flex.space-x-1\.5 {
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  #biotech-interactive-lab .flex.space-x-1\.5 > * {
+    flex: 1 1 8rem;
+  }
+
+  #order-wizard {
+    padding-top: 5rem;
+  }
+
+  #step-progress-header .flex {
+    gap: 0.35rem;
+  }
+
+  #step-progress-header button span {
+    letter-spacing: 0.06em;
+    font-size: 0.4rem;
+  }
+
+  #wizard-navigation-rack {
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  #wizard-navigation-rack button {
+    flex: 1 1 0;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    letter-spacing: 0.12em;
+  }
+
+  #wizard-navigation-rack button span {
+    font-size: 0.48rem;
+  }
+
+  #checkout-receipt,
+  #contacts-details-panel,
+  #contact-registry-form,
+  #dashboard-target-metrics,
+  #dashboard-archives-history,
+  #documents-article-vault {
+    padding: 1.25rem;
+  }
+
+  #info-doc-tabs button {
+    padding-inline: 1rem;
+    font-size: 0.62rem;
+  }
+
+  #admin-hub-view {
+    padding-top: 1.5rem;
+  }
+
+  #admin-hub-view #lux-theme-switch {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #admin-hub-view #lux-theme-switch button,
+  #admin-hub-view #workspace-dishes > .flex button,
+  #admin-hub-view #dish-form button,
+  #admin-hub-view #workspace-contacts button,
+  #admin-hub-view #workspace-orders select,
+  #admin-hub-view #workspace-athletes button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #admin-hub-view #admin-nav-panel,
+  #admin-hub-view #dish-form-wrapper,
+  #admin-hub-view #workspace-athletes [id^="inline-biometric-editor"],
+  #admin-hub-view #workspace-athletes [id^="biometrics-read-state"],
+  #admin-hub-view #workspace-orders [id^="order-card-"],
+  #admin-hub-view #workspace-contacts [id^="msg-item-"] {
+    padding: 1rem;
+  }
+
+  #admin-hub-view span,
+  #admin-hub-view p,
+  #admin-hub-view h2,
+  #admin-hub-view h3,
+  #admin-hub-view h4,
+  #admin-hub-view input,
+  #admin-hub-view textarea,
+  #admin-hub-view select {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 479px) {
+  #hero-title {
+    font-size: clamp(2.55rem, 15vw, 4.2rem);
+  }
+
+  #home-view h2 {
+    font-size: clamp(2rem, 10vw, 3.25rem);
+  }
+
+  #signature-dishes-grid .grid-cols-4,
+  #checkout-receipt .grid-cols-2,
+  #biometrics-read-state,
+  #inline-biometric-editor {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #cart-view .flex.items-center.space-x-3,
+  #profile-view .flex.items-center.space-x-5,
+  #profile-view .flex.items-center.space-x-6,
+  #profile-view .flex.space-x-4,
+  #admin-hub-view .flex.items-center.space-x-2,
+  #admin-hub-view .flex.items-center.space-x-3,
+  #admin-hub-view .flex.items-center.space-x-3\.5,
+  #admin-hub-view .flex.space-x-2,
+  #admin-hub-view .flex.space-x-3 {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+  }
+
+  #cart-view .text-\[18px\] {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+  }
+
+  #admin-hub-view #stats-pill-grid,
+  #admin-hub-view #dishes-edit-list,
+  #admin-hub-view #biometrics-read-state,
+  #admin-hub-view #inline-biometric-editor {
+    grid-template-columns: 1fr;
+  }
+
+  #admin-hub-view #workspace-orders [id^="order-card-"] .grid-cols-4,
+  #admin-hub-view #dishes-edit-list .grid-cols-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  #admin-hub-view [class*="tracking-"] {
+    letter-spacing: 0.08em;
+  }
+}
+
+/* Premium Design Agency Animations & Graphical Assets */
+
+@keyframes morph {
+  0% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+}
+
+@keyframes drift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1) rotate(120deg);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.95) rotate(240deg);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-morph {
+  animation: morph 12s ease-in-out infinite;
+}
+
+.animate-drift {
+  animation: drift 20s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 18s linear infinite;
+}
+
+/* Swiss agency guidelines line styles */
+.design-grid-line {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 80px 100%;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.01);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Premium design agency smooth reveal animations */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Fluid reveal utilities in css */
+.animate-reveal-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-reveal-down {
+  animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-reveal-left {
+  animation: fadeInLeft 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-reveal-right {
+  animation: fadeInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-reveal-scale {
+  animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered animation delay classes for cascading visual flow */
+.delay-75 { animation-delay: 75ms; }
+.delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-1000 { animation-delay: 1000ms; }
