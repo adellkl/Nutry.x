@@ -241,7 +241,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length >= SIGNATURE_DISHES.length) {
-          return parsed;
+          const signatureImages = new Map(
+            SIGNATURE_DISHES.map(dish => [dish.id, dish.image])
+          );
+
+          return parsed.map(dish => ({
+            ...dish,
+            image: signatureImages.get(dish.id) ?? dish.image
+          }));
         }
       } catch (e) {
         console.error(e);

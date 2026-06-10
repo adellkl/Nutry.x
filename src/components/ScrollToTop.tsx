@@ -18,7 +18,6 @@ export const ScrollToTop: React.FC = () => {
     'UP UP UP // 🚀',
     'DIRECTIVES SECRÈTES // 🤝',
     'CHASSEUR DE NUTRIMENT // 🥩',
-    'COSMOS ATHLÉTIQUE // 🌟',
     'VERS LES CIMES // ⛰️'
   ];
 
@@ -144,8 +143,7 @@ export const ScrollToTop: React.FC = () => {
 
   const handleScrollToTop = () => {
     playAscentSound();
-    
-    // Smooth hyperspace scroll
+
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
@@ -178,10 +176,21 @@ export const ScrollToTop: React.FC = () => {
   const strokeDashoffset = circumference - scrollProgress * circumference;
 
   return (
-    <div 
-      className="fixed bottom-8 right-8 z-[100] flex flex-col items-center pointer-events-none"
-      id="ascent-scroller-pod"
-    >
+    <>
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="lg:hidden fixed bottom-5 right-4 z-40 w-11 h-11 bg-white text-black border border-white flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.45)] focus:outline-none active:scale-95 transition-transform"
+        aria-label="Revenir en haut de la page"
+        title="Retour en haut"
+        id="mobile-scroll-to-top"
+      >
+        <ArrowUp className="w-5 h-5" />
+      </button>
+
+      <div 
+        className="hidden lg:flex fixed bottom-8 right-8 z-[100] flex-col items-center pointer-events-none"
+        id="ascent-scroller-pod"
+      >
       {/* Floating Dynamic Dialog Text Box */}
       <div 
         className={`bg-zinc-950 text-white border border-white/10 px-3 py-1.5 font-mono text-[8px] tracking-[0.18em] uppercase rounded-none mb-3 shadow-[0_10px_25px_rgba(0,0,0,0.8)] transition-all duration-300 pointer-events-none flex items-center space-x-1.5 ${
@@ -193,14 +202,14 @@ export const ScrollToTop: React.FC = () => {
       </div>
 
       {/* Circle Scroller Command Button */}
-      <button
-        ref={buttonRef}
-        onClick={handleScrollToTop}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="w-18 h-18 rounded-full bg-black/90 border border-white/10 flex items-center justify-center relative cursor-none focus:outline-none shrink-0 pointer-events-auto shadow-[0_15px_35px_rgba(0,0,0,0.6)]"
-        aria-label="Retour en haut"
-      >
+        <button
+          ref={buttonRef}
+          onClick={handleScrollToTop}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          className="w-18 h-18 rounded-full bg-black/90 border border-white/10 flex items-center justify-center relative cursor-none focus:outline-none shrink-0 pointer-events-auto shadow-[0_15px_35px_rgba(0,0,0,0.6)]"
+          aria-label="Retour en haut"
+        >
         {/* Background Rotating Ring text using SVG */}
         <div className="absolute inset-0">
           <svg className="w-full h-full transform -rotate-90 origin-center scale-[1.05]" viewBox="0 0 64 64">
@@ -246,7 +255,8 @@ export const ScrollToTop: React.FC = () => {
         <div className="bg-white/5 w-10 h-10 rounded-full flex items-center justify-center border border-white/5 group relative z-10">
           <ArrowUp className={`w-4 h-4 text-white transition-transform duration-300 ${isHovered ? '-translate-y-0.5 scale-110' : 'translate-y-0'}`} />
         </div>
-      </button>
-    </div>
+        </button>
+      </div>
+    </>
   );
 };

@@ -5,13 +5,12 @@
 
 import { GoalOption, BaseOption, ProteinOption, SauceOption, GarnishOption, MenuItem } from './types';
 
-// Let's reference the generated high-quality assets
 export const IMAGES = {
-  hero: '/src/assets/images/nutryx_hero_1780352133640.png',
-  salmon: '/src/assets/images/nutryx_dish_salmon_1780352151791.png',
-  beef: '/src/assets/images/nutryx_dish_beef_1780352170375.png',
-  chicken: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=800', // high-end clean back
-  tofu: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800'
+  hero: '/src/assets/images/nutryx-hero-color.png',
+  salmon: '/src/assets/images/nutryx-salmon-color.png',
+  beef: '/src/assets/images/nutryx-beef-color.png',
+  chicken: '/src/assets/images/nutryx-chicken-color.png',
+  tofu: '/src/assets/images/nutryx-tofu-color.png'
 };
 
 export const GOAL_OPTIONS: GoalOption[] = [

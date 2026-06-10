@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { IMAGES } from '../../data';
 import { MenuItem, UserAthleteProfile, ContactMessage, AthleteOrder } from '../../types';
 import {
   LayoutDashboard,
@@ -70,7 +71,7 @@ export const Admin: React.FC = () => {
   const [dishLipids, setDishLipids] = useState('15');
   const [dishGoal, setDishGoal] = useState<'seche' | 'performance' | 'masse'>('performance');
   const [dishIngredients, setDishIngredients] = useState('');
-  const [dishImage, setDishImage] = useState('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=800');
+  const [dishImage, setDishImage] = useState(IMAGES.tofu);
 
   // Contact reply textbox states
   const [replyText, setReplyText] = useState<{ [messageId: string]: string }>({});
@@ -162,7 +163,7 @@ export const Admin: React.FC = () => {
     setDishLipids('14');
     setDishGoal('performance');
     setDishIngredients('Blanc de poulet bio, Riz noir, Crème de basilic');
-    setDishImage('https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&q=80&w=800');
+    setDishImage(IMAGES.chicken);
     setDishModalMode('create');
   };
 
@@ -628,7 +629,7 @@ export const Admin: React.FC = () => {
                   {dishes.map(dish => (
                     <div key={dish.id} className={`border flex flex-col justify-between ${cardBgStyle}`}>
                       <div className={`relative h-44 overflow-hidden border-b ${isLightMode ? 'border-zinc-200' : 'border-white/5'}`}>
-                        <img src={dish.image} alt={dish.name} className="w-full h-full object-cover grayscale" referrerPolicy="no-referrer" />
+                        <img src={dish.image} alt={dish.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         <div className="absolute top-3 left-3 bg-black/85 backdrop-blur-md px-2 py-1 border border-white/5 text-[8.5px] font-mono text-white tracking-widest uppercase rounded-sm">
                           {dish.goal === 'seche' ? 'SÈCHE EXTRÊME' : dish.goal === 'masse' ? 'MASS BULK' : 'HYBRID PERF'}
                         </div>

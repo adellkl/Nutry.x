@@ -69,7 +69,7 @@ export const Home: React.FC = () => {
         id="hero-parallax-section"
       >
         <div
-          className="absolute inset-0 h-[112%] -top-[6%] bg-cover bg-center opacity-55 grayscale"
+          className="absolute inset-0 h-[112%] -top-[6%] bg-cover bg-center opacity-55"
           style={{
             backgroundImage: `url(${IMAGES.hero})`,
             transform: `translate3d(0, ${Math.round(scrollY * 0.18)}px, 0)`,
@@ -239,19 +239,18 @@ export const Home: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5" id="signature-dishes-grid">
-            {dishes.slice(0, 3).map((dish, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-stretch gap-4 lg:gap-5" id="signature-dishes-grid">
+            {dishes.slice(0, 3).map(dish => (
               <article
                 key={dish.id}
-                className="border border-white/10 bg-[#111111] overflow-hidden flex flex-col"
-                style={{ transform: bentoOffset(index === 1 ? -0.01 : 0.008) }}
+                className="h-full border border-white/10 bg-[#111111] overflow-hidden flex flex-col"
               >
-                <div className="relative h-72 overflow-hidden">
+                <div className="relative h-64 sm:h-72 lg:h-64 xl:h-72 overflow-hidden shrink-0">
                   <img
                     src={dish.image}
                     alt={dish.name}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-[1.02]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent" />
                   <div className="absolute top-4 left-4 bg-black/70 border border-white/10 px-3 py-1 text-[10px] font-mono uppercase tracking-widest text-white/65">
@@ -259,13 +258,13 @@ export const Home: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-6">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-4">
+                <div className="p-5 sm:p-6 flex-1 grid grid-rows-[1fr_auto] gap-6">
+                  <div className="grid content-start grid-rows-[auto_1fr] gap-3">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 min-h-[3.5rem]">
                       <h3 className="font-serif text-2xl leading-tight">{dish.name}</h3>
-                      <span className="font-mono text-sm text-white/70">{dish.price} EUR</span>
+                      <span className="font-mono text-sm text-white/70 whitespace-nowrap pt-1">{dish.price} EUR</span>
                     </div>
-                    <p className="text-sm text-white/48 leading-relaxed line-clamp-3">
+                    <p className="text-sm text-white/48 leading-relaxed line-clamp-3 min-h-[4.5rem]">
                       {dish.description}
                     </p>
                   </div>
