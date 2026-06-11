@@ -4,8 +4,26 @@
  */
 
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Send, MessageSquare, CheckCircle, Sparkles, Building2 } from 'lucide-react';
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle,
+  Clock3,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+  Send,
+  Sparkles,
+  UserRound
+} from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+
+const fieldClass =
+  'contact-field relative border border-white/10 bg-[#111111] transition-[border-color,background-color,transform,box-shadow] duration-300 focus-within:-translate-y-0.5 focus-within:border-white/35 focus-within:bg-[#151515] focus-within:shadow-[0_14px_40px_rgba(0,0,0,0.28)]';
+
+const inputClass =
+  'peer w-full bg-transparent px-4 pb-3.5 pt-7 text-sm text-white outline-none placeholder:text-white/28';
 
 export const Contact: React.FC = () => {
   const { addContactMessage } = useApp();
@@ -19,189 +37,189 @@ export const Contact: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name && email && message) {
-      addContactMessage({
-        name,
-        email,
-        phone,
-        athleteGoal,
-        message
-      });
+      addContactMessage({ name, email, phone, athleteGoal, message });
       setSubmitted(true);
     }
   };
 
+  const resetForm = () => {
+    setSubmitted(false);
+    setName('');
+    setEmail('');
+    setPhone('');
+    setMessage('');
+  };
+
   return (
-    <div className="bg-[#0d0d0d] text-white min-h-screen pt-28 pb-16" id="contact-view">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        
-        <div className="mb-12 space-y-2 text-center max-w-2xl mx-auto">
-          <span className="text-white/40 text-[10px] font-mono tracking-widest uppercase">// SECRÉTARIAT CYNÉTIQUE //</span>
-          <h1 className="font-serif text-3xl md:text-5xl font-regular">Contacter Concierge Nutry.x</h1>
-          <p className="text-white/50 text-xs md:text-sm font-light leading-relaxed">
-            Un besoin particulier pour vos compétitions, un séminaire d'athlètes ou un accompagnement diététique d'élite personnalisé ? Nos conseillers d'exception vous répondent sous 2 heures.
+    <div className="min-h-screen bg-[#0d0d0d] pb-20 pt-28 text-white" id="contact-view">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <header className="grid gap-8 border-b border-white/10 pb-10 lg:grid-cols-[1fr_0.7fr] lg:items-end">
+          <div className="max-w-3xl space-y-5">
+            <div className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-emerald-300/75">
+              <span className="h-1.5 w-1.5 bg-emerald-400" />
+              Concierge Nutry.X
+            </div>
+            <h1 className="max-w-3xl font-serif text-4xl leading-[1.05] sm:text-5xl lg:text-6xl">
+              Parlons de votre nutrition.
+            </h1>
+          </div>
+          <p className="max-w-xl text-sm leading-7 text-white/52 lg:justify-self-end">
+            Une question, un objectif sportif ou un besoin pour votre structure ? Décrivez-nous votre projet, notre équipe vous répond rapidement.
           </p>
-        </div>
+        </header>
 
         {submitted ? (
-          <div className="max-w-md mx-auto border border-white/10 bg-white/[0.01] p-8 text-center space-y-6" id="contact-success-state">
-            <div className="w-12 h-12 bg-white text-black rounded-full flex items-center justify-center mx-auto hover:scale-105 transition-transform">
-              <CheckCircle className="w-6 h-6" />
+          <section className="mx-auto my-20 max-w-xl border border-emerald-400/25 bg-[#111611] p-8 text-center sm:p-12" id="contact-success-state">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center bg-emerald-400 text-black">
+              <CheckCircle className="h-6 w-6" />
             </div>
-            <div className="space-y-2">
-              <h3 className="font-sans font-bold text-sm tracking-widest uppercase text-white">Requête Enregistrée</h3>
-              <p className="text-white/50 text-xs font-light leading-relaxed">
-                Votre manifeste a été transmis à notre concierge nutritionnel de garde. Un appel ou courriel de calage sera effectué sous un créneau de 2 heures maximum.
-              </p>
-            </div>
-            <div className="pt-2">
-              <button
-                onClick={() => {
-                  setSubmitted(false);
-                  setName('');
-                  setEmail('');
-                  setPhone('');
-                  setMessage('');
-                }}
-                className="px-6 py-2.5 bg-white text-black font-sans text-xs tracking-widest font-bold uppercase transition-transform hover:scale-102 cursor-none"
-              >
-                NOUVEAU MESSAGE
-              </button>
-            </div>
-          </div>
+            <h2 className="mt-7 font-serif text-3xl">Message bien reçu.</h2>
+            <p className="mt-3 text-sm leading-7 text-white/52">
+              Notre équipe revient vers vous sous deux heures pendant les horaires d’ouverture.
+            </p>
+            <button
+              onClick={resetForm}
+              className="mt-8 inline-flex items-center justify-center gap-2 border border-white bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-transparent hover:text-white"
+            >
+              Nouveau message
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </section>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12" id="contact-form-grid">
-            
-            {/* Left Box: Elegant contacts credentials */}
-            <div className="lg:col-span-5 space-y-8 bg-white/[0.01] border border-white/5 p-5 sm:p-8" id="contacts-details-panel">
-              <div className="space-y-2">
-                <span className="text-[9px] font-mono text-zinc-500 tracking-widest uppercase">// COORDINATES</span>
-                <h3 className="font-serif text-xl font-regular text-white">Le Laboratoire Central</h3>
-                <p className="text-white/40 text-xs font-light leading-relaxed">
-                  Basés au cœur du quartier de l'innovation sportive et culinaire, nous livrons nos plateaux gastronomiques dans toute l'Île-de-France sous chaîne du froid contrôlée.
-                </p>
-              </div>
+          <div className="grid gap-5 py-10 lg:grid-cols-12" id="contact-form-grid">
+            <aside className="relative overflow-hidden border border-white/10 bg-[#121212] p-6 sm:p-8 lg:col-span-4" id="contacts-details-panel">
+              <div className="absolute right-0 top-0 h-28 w-28 border-b border-l border-white/5 bg-white/[0.02]" />
+              <div className="relative flex h-full flex-col justify-between gap-12">
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-white/35">Contact direct</span>
+                  <h2 className="mt-3 max-w-xs font-serif text-3xl leading-tight">Une équipe proche de vos objectifs.</h2>
 
-              <div className="space-y-6 text-xs tracking-wider font-light text-white/70">
-                <div className="flex items-start space-x-4">
-                  <MapPin className="w-5 h-5 text-white/50 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <div className="font-bold text-white uppercase">Siège & Cuisine d'Expression :</div>
-                    <div>88 Avenue des Olympiades, 75008 Paris</div>
+                  <div className="mt-9 divide-y divide-white/8 border-y border-white/8">
+                    <a href="mailto:concierge@nutryx.athletic.fr" className="group flex gap-4 py-5">
+                      <Mail className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300/75 transition-transform group-hover:scale-110" />
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-white/35">E-mail</div>
+                        <div className="mt-1 break-all text-sm text-white/78">concierge@nutryx.athletic.fr</div>
+                      </div>
+                    </a>
+                    <a href="tel:+33198329999" className="group flex gap-4 py-5">
+                      <Phone className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300/75 transition-transform group-hover:scale-110" />
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-white/35">Téléphone</div>
+                        <div className="mt-1 text-sm text-white/78">+33 (0)1 98 32 99 99</div>
+                      </div>
+                    </a>
+                    <div className="flex gap-4 py-5">
+                      <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300/75" />
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-white/35">Adresse</div>
+                        <div className="mt-1 text-sm leading-6 text-white/78">88 avenue des Olympiades, 75008 Paris</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 py-5">
+                      <Clock3 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300/75" />
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-white/35">Disponibilité</div>
+                        <div className="mt-1 text-sm text-white/78">Lun–Sam · 8h–20h</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-start space-x-4">
-                  <Mail className="w-5 h-5 text-white/50 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <div className="font-bold text-white uppercase">Courriel Officiel :</div>
-                    <div className="break-all">concierge@nutryx.athletic.fr</div>
+                <div className="border border-white/10 bg-black/25 p-5">
+                  <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-white/55">
+                    <Building2 className="h-4 w-4" />
+                    Clubs & entreprises
                   </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <Phone className="w-5 h-5 text-white/50 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <div className="font-bold text-white uppercase">Ligne Téléphonique Dédiée :</div>
-                    <div>+33 (0)1 98 32 C9 E9</div>
-                  </div>
+                  <p className="mt-3 text-xs leading-6 text-white/42">
+                    Programmes hebdomadaires, événements sportifs et solutions de catering sur demande.
+                  </p>
                 </div>
               </div>
+            </aside>
 
-              {/* Specific athletes catering card banner */}
-              <div className="border-t border-white/5 pt-6 space-y-4">
-                <div className="flex items-center space-x-2 text-[10px] font-mono text-zinc-500 tracking-widest uppercase">
-                  <Building2 className="w-4 h-4 text-white/65" />
-                  <span>CATERING SPORTIF D'AFFAIRES</span>
+            <form onSubmit={handleSubmit} className="border border-white/10 bg-[#0f0f0f] p-5 sm:p-8 lg:col-span-8" id="contact-registry-form">
+              <div className="mb-8 flex items-start justify-between gap-6">
+                <div>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-white/35">Votre demande</span>
+                  <h2 className="mt-2 font-serif text-2xl sm:text-3xl">Écrivez-nous simplement.</h2>
                 </div>
-                <p className="text-[11px] text-white/40 font-light leading-relaxed">
-                  Salles de fitness premium, clubs d'athlétisme d'élite ou évènements de préparation olympique, contactez notre équipe B2B pour des abonnements hebdomadaires de prestige.
-                </p>
-              </div>
-            </div>
-
-            {/* Right Box: The Form */}
-            <form onSubmit={handleSubmit} className="lg:col-span-7 bg-white/[0.01] border border-white/5 p-5 sm:p-8 space-y-6" id="contact-registry-form">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-mono text-white/40 uppercase tracking-widest block">Votre Identité (Nom Complet)</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="NOM COMPLET DE L'ATHLÈTE"
-                    className="w-full bg-[#121212] border border-white/10 rounded-none p-3.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-white transition-colors"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[9px] font-mono text-white/40 uppercase tracking-widest block">Courriel de Liaison</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="COURRIEL@EXEMPLE.COM"
-                    className="w-full bg-[#121212] border border-white/10 rounded-none p-3.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-white transition-colors"
-                    required
-                  />
-                </div>
+                <Sparkles className="hidden h-5 w-5 text-emerald-300/70 sm:block" />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-mono text-white/40 uppercase tracking-widest block">Téléphone Portable (Optionnel)</label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+33 (0)6 00 00 00 00"
-                    className="w-full bg-[#121212] border border-white/10 rounded-none p-3.5 text-xs text-white placeholder-zinc-500 outline-none focus:border-white transition-colors"
-                  />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className={fieldClass}>
+                  <UserRound className="absolute right-4 top-4 h-4 w-4 text-white/20 transition-colors peer-focus:text-white/65" />
+                  <label htmlFor="contact-name" className="absolute left-4 top-3 text-[9px] font-mono uppercase tracking-widest text-white/38 transition-colors">
+                    Nom et prénom
+                  </label>
+                  <input id="contact-name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom Prénom" className={inputClass} autoComplete="name" required />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[9px] font-mono text-white/40 uppercase tracking-widest block">Votre Programme d'Entraînement</label>
+                <div className={fieldClass}>
+                  <Mail className="absolute right-4 top-4 h-4 w-4 text-white/20" />
+                  <label htmlFor="contact-email" className="absolute left-4 top-3 text-[9px] font-mono uppercase tracking-widest text-white/38">
+                    Adresse mail
+                  </label>
+                  <input id="contact-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="nom@exemple.fr" className={inputClass} autoComplete="email" required />
+                </div>
+
+                <div className={fieldClass}>
+                  <Phone className="absolute right-4 top-4 h-4 w-4 text-white/20" />
+                  <label htmlFor="contact-phone" className="absolute left-4 top-3 text-[9px] font-mono uppercase tracking-widest text-white/38">
+                    Téléphone
+                  </label>
+                  <input id="contact-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="06 00 00 00 00" className={inputClass} autoComplete="tel" />
+                </div>
+
+                <div className={fieldClass}>
+                  <label htmlFor="contact-goal" className="absolute left-4 top-3 z-10 text-[9px] font-mono uppercase tracking-widest text-white/38">
+                    Votre objectif
+                  </label>
                   <select
+                    id="contact-goal"
                     value={athleteGoal}
                     onChange={(e) => setAthleteGoal(e.target.value)}
-                    className="w-full bg-[#121212] border border-white/10 rounded-none p-3.5 text-xs text-white outline-none focus:border-white transition-colors appearance-none"
+                    className="w-full appearance-none bg-transparent px-4 pb-3.5 pt-7 text-sm text-white outline-none"
                   >
-                    <option value="seche">Sèche & Découpe Musculaire</option>
-                    <option value="performance">Force Athlétique & Endurance</option>
-                    <option value="masse">Prise de Masse Propre</option>
-                    <option value="catering">Évènementiel / Catering de Salle</option>
+                    <option value="seche">Sèche & définition</option>
+                    <option value="performance">Performance & endurance</option>
+                    <option value="masse">Prise de masse</option>
+                    <option value="catering">Club, entreprise ou événement</option>
                   </select>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[9px] font-mono text-white/40 uppercase tracking-widest block">Expression du besoin</label>
-                <div className="flex bg-[#121212] border border-white/10 p-4 rounded-none focus-within:border-white transition-colors">
-                  <MessageSquare className="w-5 h-5 text-white/20 shrink-0 mt-0.5 mr-3" />
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Détaillez le volume d'assiettes de performance souhaité hebdomadairement, vos allergies ou vos objectifs physiques cliniques..."
-                    className="bg-transparent w-full text-xs text-white placeholder-zinc-500 outline-none resize-none h-32 font-sans leading-relaxed"
-                    required
-                  />
-                </div>
+              <div className={`${fieldClass} mt-4`}>
+                <MessageSquare className="absolute right-4 top-4 h-4 w-4 text-white/20" />
+                <label htmlFor="contact-message" className="absolute left-4 top-3 text-[9px] font-mono uppercase tracking-widest text-white/38">
+                  Votre message
+                </label>
+                <textarea
+                  id="contact-message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Décrivez votre demande, vos objectifs ou vos contraintes alimentaires..."
+                  className="min-h-40 w-full resize-none bg-transparent px-4 pb-4 pt-8 text-sm leading-7 text-white outline-none placeholder:text-white/28"
+                  required
+                />
               </div>
 
-              <div className="pt-4 border-t border-white/5 flex justify-end">
+              <div className="mt-6 flex flex-col gap-5 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <p className="max-w-sm text-[11px] leading-5 text-white/32">
+                  En envoyant ce formulaire, vous acceptez d’être contacté uniquement au sujet de votre demande.
+                </p>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-8 py-4 bg-white text-black font-sans text-xs tracking-widest font-bold uppercase transition-all duration-300 hover:bg-zinc-200 cursor-none flex items-center justify-center gap-2"
+                  className="group inline-flex w-full items-center justify-center gap-3 bg-white px-7 py-4 text-xs font-bold uppercase tracking-widest text-black transition-colors hover:bg-emerald-300 sm:w-auto"
                 >
-                  <Send className="w-4 h-4" />
-                  <span>TRANSMETTRE LA REQUÊTE</span>
+                  Envoyer
+                  <Send className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
               </div>
             </form>
-
           </div>
         )}
-
       </div>
     </div>
   );

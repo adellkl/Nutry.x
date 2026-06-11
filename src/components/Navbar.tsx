@@ -9,7 +9,7 @@ import { ShoppingBag, Menu, X, User, ShieldAlert, Award } from 'lucide-react';
 import gsap from 'gsap';
 
 export const Navbar: React.FC = () => {
-  const { activeView, setActiveView, cart, profile, isLoggedIn, logoutUser } = useApp();
+  const { activeView, setActiveView, cart, profile, isLoggedIn, isAdmin, logoutUser } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navbarRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -150,13 +150,15 @@ export const Navbar: React.FC = () => {
                     >
                       <span>MON PANIER</span>
                     </button>
-                    <button
-                      onClick={() => handleNavLink('admin')}
-                      className="w-full text-left px-2.5 py-2.5 hover:bg-white/5 text-white/90 hover:text-white font-mono text-[9px] tracking-widest uppercase transition-colors focus:outline-none cursor-none flex items-center justify-between border-t border-b border-white/5 my-1.5"
-                    >
-                      <span>CONSOLE ADMIN</span>
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleNavLink('admin')}
+                        className="w-full text-left px-2.5 py-2.5 hover:bg-white/5 text-white/90 hover:text-white font-mono text-[9px] tracking-widest uppercase transition-colors focus:outline-none cursor-none flex items-center justify-between border-t border-b border-white/5 my-1.5"
+                      >
+                        <span>CONSOLE ADMIN</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         logoutUser();

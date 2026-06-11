@@ -83,6 +83,11 @@ export interface ContactMessage {
   status: 'pending' | 'answered';
   reply?: string;
   repliedAt?: string;
+  replies?: {
+    id: string;
+    message: string;
+    date: string;
+  }[];
 }
 
 export interface AdminLog {

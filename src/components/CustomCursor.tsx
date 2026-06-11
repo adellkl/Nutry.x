@@ -4,7 +4,36 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import gsap from 'gsap';
+
+const INTERACTIVE_SELECTOR = 'a, button, [role="button"], input, select, textarea, .hover-target';
+
+const isLightBackground = (element: Element | null) => {
+  let current = element instanceof HTMLElement ? element : null;
+
+  while (current && current !== document.body) {
+    const forcedTheme = current.dataset.cursorTheme;
+    if (forcedTheme === 'dark') return true;
+    if (forcedTheme === 'light') return false;
+
+    const background = window.getComputedStyle(current).backgroundColor;
+    const match = background.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+
+    if (match) {
+      const alpha = match[4] === undefined ? 1 : Number(match[4]);
+      if (alpha > 0.35) {
+        const red = Number(match[1]);
+        const green = Number(match[2]);
+        const blue = Number(match[3]);
+        const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+        return luminance > 0.66;
+      }
+    }
+
+    current = current.parentElement;
+  }
+
+  return false;
+};
 
 export const CustomCursor: React.FC = () => {
   const cursorDotRef = useRef<HTMLDivElement>(null);
@@ -13,99 +42,92 @@ export const CustomCursor: React.FC = () => {
   useEffect(() => {
     const dot = cursorDotRef.current;
     const ring = cursorRingRef.current;
-    if (!dot || !ring) return;
+    if (!dot || !ring || window.matchMedia('(hover: none)').matches) return;
 
-    // Set initial custom mouse position
-    gsap.set(dot, { xPercent: -50, yPercent: -50 });
-    gsap.set(ring, { xPercent: -50, yPercent: -50 });
+    const target = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const dotPosition = { ...target };
+    const ringPosition = { ...target };
+    let frame = 0;
+    let visible = false;
+    let interactive = false;
+    let darkCursor = false;
 
-    const onMouseMove = (e: MouseEvent) => {
-      // Immediate follow for dot
-      gsap.to(dot, {
-        x: e.clientX,
-        y: e.clientY,
-        duration: 0.1,
-        ease: 'power2.out'
-      });
+    const render = () => {
+      dotPosition.x += (target.x - dotPosition.x) * 0.42;
+      dotPosition.y += (target.y - dotPosition.y) * 0.42;
+      ringPosition.x += (target.x - ringPosition.x) * 0.16;
+      ringPosition.y += (target.y - ringPosition.y) * 0.16;
 
-      // Smooth lag target follow for the luxury outer ring
-      gsap.to(ring, {
-        x: e.clientX,
-        y: e.clientY,
-        duration: 0.4,
-        ease: 'power3.out'
-      });
+      dot.style.transform = `translate3d(${dotPosition.x}px, ${dotPosition.y}px, 0) translate(-50%, -50%) scale(${interactive ? 0.65 : 1})`;
+      ring.style.transform = `translate3d(${ringPosition.x}px, ${ringPosition.y}px, 0) translate(-50%, -50%) scale(${interactive ? 1.65 : 1})`;
+
+      frame = window.requestAnimationFrame(render);
     };
 
-    const onMouseOverLink = () => {
-      gsap.to(ring, {
-        scale: 1.8,
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        borderColor: '#ffffff',
-        borderWidth: 1,
-        duration: 0.3
-      });
-      gsap.to(dot, {
-        scale: 0.5,
-        backgroundColor: '#ffffff',
-        duration: 0.3
-      });
+    const applyTheme = (useDarkCursor: boolean) => {
+      if (darkCursor === useDarkCursor) return;
+      darkCursor = useDarkCursor;
+      dot.style.backgroundColor = useDarkCursor ? '#080808' : '#ffffff';
+      ring.style.borderColor = useDarkCursor ? 'rgba(8, 8, 8, 0.72)' : 'rgba(255, 255, 255, 0.58)';
+      ring.style.backgroundColor = interactive
+        ? useDarkCursor ? 'rgba(8, 8, 8, 0.10)' : 'rgba(255, 255, 255, 0.10)'
+        : 'transparent';
     };
 
-    const onMouseLeaveLink = () => {
-      gsap.to(ring, {
-        scale: 1,
-        backgroundColor: 'transparent',
-        borderColor: 'rgba(255, 255, 255, 0.5)',
-        borderWidth: 1,
-        duration: 0.3
-      });
-      gsap.to(dot, {
-        scale: 1,
-        backgroundColor: '#ffffff',
-        duration: 0.3
-      });
+    const applyInteractiveState = (isInteractive: boolean) => {
+      if (interactive === isInteractive) return;
+      interactive = isInteractive;
+      ring.style.backgroundColor = isInteractive
+        ? darkCursor ? 'rgba(8, 8, 8, 0.10)' : 'rgba(255, 255, 255, 0.10)'
+        : 'transparent';
     };
 
-    const addHoverListeners = () => {
-      const hoverables = document.querySelectorAll('a, button, [role="button"], input, select, textarea, .hover-target');
-      hoverables.forEach(el => {
-        el.addEventListener('mouseenter', onMouseOverLink);
-        el.addEventListener('mouseleave', onMouseLeaveLink);
-      });
+    const onPointerMove = (event: PointerEvent) => {
+      target.x = event.clientX;
+      target.y = event.clientY;
+
+      if (!visible) {
+        visible = true;
+        dot.style.opacity = '1';
+        ring.style.opacity = '1';
+        dotPosition.x = event.clientX;
+        dotPosition.y = event.clientY;
+        ringPosition.x = event.clientX;
+        ringPosition.y = event.clientY;
+      }
+
+      const hoveredElement = document.elementFromPoint(event.clientX, event.clientY);
+      applyInteractiveState(Boolean(hoveredElement?.closest(INTERACTIVE_SELECTOR)));
+      applyTheme(isLightBackground(hoveredElement));
     };
 
-    window.addEventListener('mousemove', onMouseMove);
-    addHoverListeners();
+    const onPointerLeave = () => {
+      visible = false;
+      dot.style.opacity = '0';
+      ring.style.opacity = '0';
+    };
 
-    // Re-bind hover listeners dynamically since pages will load or rebuild DOM components
-    const observer = new MutationObserver(() => {
-      addHoverListeners();
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    document.documentElement.addEventListener('mouseleave', onPointerLeave);
+    frame = window.requestAnimationFrame(render);
 
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('pointermove', onPointerMove);
+      document.documentElement.removeEventListener('mouseleave', onPointerLeave);
     };
   }, []);
 
   return (
     <>
-      {/* Small dot cursor */}
       <div
         ref={cursorDotRef}
-        className="custom-cursor fixed top-0 left-0 w-2 h-2 bg-white rounded-full pointer-events-none z-50 mix-blend-difference hidden md:block"
+        className="custom-cursor fixed left-0 top-0 z-[110] hidden h-2 w-2 rounded-full bg-white opacity-0 pointer-events-none transition-[opacity,background-color] duration-200 md:block"
         id="cursor-dot"
       />
-      {/* Outer elegant ring */}
       <div
         ref={cursorRingRef}
-        className="custom-cursor fixed top-0 left-0 w-8 h-8 border border-white/50 rounded-full pointer-events-none z-50 hidden md:block"
+        className="custom-cursor fixed left-0 top-0 z-[109] hidden h-8 w-8 rounded-full border border-white/60 opacity-0 pointer-events-none transition-[opacity,border-color,background-color] duration-200 md:block"
         id="cursor-ring"
       />
     </>

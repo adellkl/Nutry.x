@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { IMAGES } from '../../data';
 import { MenuItem, UserAthleteProfile, ContactMessage, AthleteOrder } from '../../types';
@@ -27,7 +27,9 @@ import {
   Sliders,
   CheckCircle,
   FileSpreadsheet,
-  AlertCircle
+  AlertCircle,
+  Image as ImageIcon,
+  Upload
 } from 'lucide-react';
 
 export const Admin: React.FC = () => {
@@ -48,7 +50,7 @@ export const Admin: React.FC = () => {
   } = useApp();
 
   // Active admin tab state
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'dishes' | 'athletes' | 'contacts' | 'orders' | 'logs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'dishes' | 'athletes' | 'chat' | 'contacts' | 'orders' | 'logs'>('dashboard');
 
   // Theme switch state specifically for the Admin hub
   const [isLightMode, setIsLightMode] = useState<boolean>(false);
@@ -72,9 +74,20 @@ export const Admin: React.FC = () => {
   const [dishGoal, setDishGoal] = useState<'seche' | 'performance' | 'masse'>('performance');
   const [dishIngredients, setDishIngredients] = useState('');
   const [dishImage, setDishImage] = useState(IMAGES.tofu);
+  const [dishImageName, setDishImageName] = useState('');
+  const [dishImageError, setDishImageError] = useState('');
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
 
   // Contact reply textbox states
   const [replyText, setReplyText] = useState<{ [messageId: string]: string }>({});
+  const [selectedChatEmail, setSelectedChatEmail] = useState(
+    () => athletes.find(
+      athlete =>
+        athlete.email !== 'kevin.loukal@eliteathletics.fr' &&
+        contactMessages.some(message => message.email === athlete.email)
+    )?.email || athletes.find(athlete => athlete.email !== 'kevin.loukal@eliteathletics.fr')?.email || ''
+  );
+  const [chatReply, setChatReply] = useState('');
 
   // Athlete physical metrics override form states
   const [isEditingAthlete, setIsEditingAthlete] = useState<string | null>(null);
@@ -136,6 +149,60 @@ export const Admin: React.FC = () => {
     setDishName('');
     setDishDesc('');
     setDishIngredients('');
+    setDishImageName('');
+    setDishImageError('');
+  };
+
+  const handleDishImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setDishImageError('Sélectionnez un fichier image valide.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setDishImageError('La photo doit peser moins de 10 Mo.');
+      return;
+    }
+
+    setDishImageError('');
+    setIsProcessingImage(true);
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      setDishImageError('Impossible de lire cette photo.');
+      setIsProcessingImage(false);
+    };
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => {
+        setDishImageError('Le format de cette photo n’est pas pris en charge.');
+        setIsProcessingImage(false);
+      };
+      image.onload = () => {
+        const maxDimension = 1400;
+        const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        const context = canvas.getContext('2d');
+
+        if (!context) {
+          setDishImageError('Impossible de préparer cette photo.');
+          setIsProcessingImage(false);
+          return;
+        }
+
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        setDishImage(canvas.toDataURL('image/jpeg', 0.82));
+        setDishImageName(file.name);
+        setIsProcessingImage(false);
+      };
+      image.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const triggerEditDish = (dish: MenuItem) => {
@@ -150,6 +217,8 @@ export const Admin: React.FC = () => {
     setDishGoal(dish.goal);
     setDishIngredients(dish.ingredients.join(', '));
     setDishImage(dish.image);
+    setDishImageName('');
+    setDishImageError('');
     setDishModalMode('edit');
   };
 
@@ -164,6 +233,8 @@ export const Admin: React.FC = () => {
     setDishGoal('performance');
     setDishIngredients('Blanc de poulet bio, Riz noir, Crème de basilic');
     setDishImage(IMAGES.chicken);
+    setDishImageName('');
+    setDishImageError('');
     setDishModalMode('create');
   };
 
@@ -206,18 +277,41 @@ export const Admin: React.FC = () => {
     logFilter === 'all' ? true : l.type === logFilter
   );
 
+  const chatAthletes = useMemo(
+    () => athletes.filter(athlete => athlete.email !== 'kevin.loukal@eliteathletics.fr'),
+    [athletes]
+  );
+
+  const selectedChatAthlete = chatAthletes.find(athlete => athlete.email === selectedChatEmail) || chatAthletes[0];
+  const selectedChatMessages = useMemo(
+    () => contactMessages.filter(message => message.email === selectedChatAthlete?.email).reverse(),
+    [contactMessages, selectedChatAthlete?.email]
+  );
+  const latestChatMessage = selectedChatMessages[selectedChatMessages.length - 1];
+  const hasPendingChatMessage = selectedChatMessages.some(message => message.status === 'pending');
+
+  const handleChatReply = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!latestChatMessage || !chatReply.trim()) return;
+    replyToMessage(latestChatMessage.id, chatReply.trim());
+    setChatReply('');
+  };
+
   // Statistics calculation for Dashboard
   const pendingOrdersCount = completedOrders.filter(o => o.status === 'pending').length;
   const inDeliveryOrdersCount = completedOrders.filter(o => o.status === 'delivering' || o.status === 'prepared').length;
   const totalRevenue = completedOrders.reduce((sum, o) => sum + o.total, 0);
   const pendingMessagesCount = contactMessages.filter(m => m.status === 'pending').length;
+  const athleteChatPendingCount = contactMessages.filter(
+    message => message.status === 'pending' && chatAthletes.some(athlete => athlete.email === message.email)
+  ).length;
 
   return (
-    <div className={`min-h-screen py-12 pb-24 transition-colors duration-500 ${bgStyle}`} id="admin-hub-view">
-      <div className="max-w-7xl mx-auto px-6">
+    <div className={`min-h-screen py-6 pb-12 transition-colors duration-500 lg:h-screen lg:overflow-hidden ${bgStyle}`} id="admin-hub-view">
+      <div className="max-w-7xl mx-auto px-6 lg:flex lg:h-full lg:flex-col">
         
         {/* Main Hub Headline with integrated Luxury Light/Dark Switcher */}
-        <div className={`flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-8 mb-10 gap-6 ${isLightMode ? 'border-zinc-200' : 'border-white/10'}`} id="admin-header-panel">
+        <div className={`flex shrink-0 flex-col md:flex-row justify-between items-start md:items-center border-b pb-6 mb-6 gap-6 ${isLightMode ? 'border-zinc-200' : 'border-white/10'}`} id="admin-header-panel">
           <div>
             <button
               onClick={() => setActiveView('accueil')}
@@ -261,10 +355,10 @@ export const Admin: React.FC = () => {
         </div>
 
         {/* Outer Split layout: Left Navigation Panel & Right Data views workspace */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start" id="admin-workspace-grid">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start lg:min-h-0 lg:flex-1" id="admin-workspace-grid">
           
           {/* LEFT COLUMN PANEL: Beautiful navigational sidebar controls - STICKY FIXED on large views */}
-          <nav className={`lg:col-span-4 lg:sticky lg:top-28 lg:self-start border p-6 flex flex-col space-y-2 h-auto ${cardBgStyle} rounded-sm`} id="admin-nav-panel">
+          <nav className={`lg:col-span-4 lg:self-start border p-6 flex flex-col space-y-2 h-auto lg:max-h-full lg:overflow-y-auto ${cardBgStyle} rounded-sm`} id="admin-nav-panel">
             
             <span className={`text-[9px] font-mono tracking-widest uppercase mb-3 block ${labelTextStyle}`}>// MODULAR MANIFEST</span>
             
@@ -312,12 +406,29 @@ export const Admin: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setActiveTab('chat')}
+              className={`w-full text-left p-3.5 text-xs tracking-widest uppercase font-mono transition-all flex items-center space-x-3 cursor-none focus:outline-none rounded-sm ${
+                activeTab === 'chat' ? tabItemActiveStyle : tabItemHoverStyle
+              }`}
+            >
+              <MessageSquare className="w-4 h-4 shrink-0" />
+              <div className="flex-grow flex justify-between items-center">
+                <span>CHAT ATHLÈTES</span>
+                {athleteChatPendingCount > 0 && (
+                  <span className="bg-emerald-500 text-white text-[9px] px-1.5 py-0.5 rounded-sm font-bold font-sans">
+                    {athleteChatPendingCount}
+                  </span>
+                )}
+              </div>
+            </button>
+
+            <button
               onClick={() => setActiveTab('contacts')}
               className={`w-full text-left p-3.5 text-xs tracking-widest uppercase font-mono transition-all flex items-center space-x-3 cursor-none focus:outline-none rounded-sm ${
                 activeTab === 'contacts' ? tabItemActiveStyle : tabItemHoverStyle
               }`}
             >
-              <MessageSquare className="w-4 h-4 shrink-0" />
+              <FileSpreadsheet className="w-4 h-4 shrink-0" />
               <div className="flex-grow flex justify-between items-center">
                 <span>CONCIERGERIE</span>
                 {pendingMessagesCount > 0 && (
@@ -343,7 +454,7 @@ export const Admin: React.FC = () => {
           </nav>
 
           {/* RIGHT COLUMN AREA: dynamic workspaces based on tab */}
-          <main className="lg:col-span-8 space-y-8" id="admin-right-workspace">
+          <main className="lg:col-span-8 space-y-8 lg:h-full lg:overflow-y-auto lg:pr-3" id="admin-right-workspace">
 
             {/* TAB 1: DASHBOARD TELEMETRY VIEWER */}
             {activeTab === 'dashboard' && (
@@ -581,15 +692,62 @@ export const Admin: React.FC = () => {
                         </select>
                       </div>
 
-                      <div className="md:col-span-6 space-y-2">
-                        <label className={`text-[9px] font-mono block uppercase tracking-widest ${labelTextStyle}`}>Illustration Image URL</label>
-                        <input
-                          type="text"
-                          value={dishImage}
-                          onChange={(e) => setDishImage(e.target.value)}
-                          className={`w-full p-3 text-xs outline-none rounded-none border ${inputStyle}`}
-                          required
-                        />
+                      <div className="md:col-span-12 space-y-2">
+                        <label className={`text-[9px] font-mono block uppercase tracking-widest ${labelTextStyle}`}>Photo du plat</label>
+                        <div className={`grid gap-4 border p-4 sm:grid-cols-[180px_minmax(0,1fr)] ${
+                          isLightMode ? 'border-zinc-200 bg-white' : 'border-white/10 bg-black/20'
+                        }`}>
+                          <div className={`relative aspect-[4/3] overflow-hidden border ${
+                            isLightMode ? 'border-zinc-200 bg-zinc-100' : 'border-white/10 bg-[#111111]'
+                          }`}>
+                            {dishImage ? (
+                              <img src={dishImage} alt="Aperçu du plat" className="h-full w-full object-cover" />
+                            ) : (
+                              <div className={`flex h-full items-center justify-center ${labelTextStyle}`}>
+                                <ImageIcon className="h-7 w-7" />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex min-w-0 flex-col justify-center gap-3">
+                            <label className={`inline-flex w-full cursor-pointer items-center justify-center gap-2 border px-4 py-3 text-[10px] font-bold uppercase tracking-widest transition-colors sm:w-fit ${
+                              isLightMode
+                                ? 'border-zinc-300 bg-zinc-950 text-white hover:bg-zinc-800'
+                                : 'border-white bg-white text-black hover:bg-zinc-200'
+                            }`}>
+                              <Upload className="h-4 w-4" />
+                              {isProcessingImage ? 'Préparation...' : 'Choisir une photo'}
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                onChange={handleDishImageUpload}
+                                className="sr-only"
+                                disabled={isProcessingImage}
+                              />
+                            </label>
+                            <div className={`text-[10px] leading-5 ${subTextStyle}`}>
+                              JPG, PNG ou WebP, 10 Mo maximum. La photo est optimisée automatiquement.
+                              {dishImageName && <span className="block truncate font-semibold">{dishImageName}</span>}
+                            </div>
+                            {dishImageError && (
+                              <div className="flex items-center gap-2 text-[10px] text-red-500">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                {dishImageError}
+                              </div>
+                            )}
+                            <input
+                              type="url"
+                              value={dishImage.startsWith('data:') ? '' : dishImage}
+                              onChange={(e) => {
+                                setDishImage(e.target.value);
+                                setDishImageName('');
+                                setDishImageError('');
+                              }}
+                              placeholder="Ou collez l’URL d’une image"
+                              className={`w-full p-3 text-xs outline-none rounded-none border ${inputStyle}`}
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       <div className="md:col-span-12 space-y-2">
@@ -902,7 +1060,162 @@ export const Admin: React.FC = () => {
               </div>
             )}
 
-            {/* TAB 4: CLIENT CONCIERGERIE / CLIENT MESSAGES */}
+            {/* ATHLETE DIRECT CHAT */}
+            {activeTab === 'chat' && (
+              <div className="space-y-6 animate-fade-in" id="workspace-athlete-chat">
+                <div className="space-y-1">
+                  <h2 className={`font-serif text-2xl font-regular ${headingStyle}`}>Chat direct avec les athlètes</h2>
+                  <p className={`text-xs ${subTextStyle}`}>Consultez chaque conversation privée et répondez depuis la console.</p>
+                </div>
+
+                <div className={`grid min-h-[560px] overflow-hidden border lg:grid-cols-[230px_minmax(0,1fr)] ${cardBgStyle}`}>
+                  <aside className={`border-b p-3 lg:border-b-0 lg:border-r ${
+                    isLightMode ? 'border-zinc-200 bg-zinc-50' : 'border-white/5 bg-black/20'
+                  }`}>
+                    <div className={`mb-3 px-2 py-2 text-[9px] font-mono uppercase tracking-widest ${labelTextStyle}`}>
+                      Conversations
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+                      {chatAthletes.map(athlete => {
+                        const messages = contactMessages.filter(message => message.email === athlete.email);
+                        const unreadCount = messages.filter(message => message.status === 'pending').length;
+                        const isSelected = selectedChatAthlete?.email === athlete.email;
+
+                        return (
+                          <button
+                            key={athlete.email}
+                            onClick={() => {
+                              setSelectedChatEmail(athlete.email);
+                              setChatReply('');
+                            }}
+                            className={`flex min-w-[190px] items-center gap-3 border p-3 text-left transition-colors lg:min-w-0 lg:w-full ${
+                              isSelected
+                                ? isLightMode
+                                  ? 'border-zinc-300 bg-white text-zinc-950'
+                                  : 'border-white/15 bg-white/8 text-white'
+                                : isLightMode
+                                  ? 'border-transparent text-zinc-600 hover:bg-white'
+                                  : 'border-transparent text-white/55 hover:bg-white/5 hover:text-white'
+                            }`}
+                          >
+                            <span className={`flex h-9 w-9 shrink-0 items-center justify-center text-[10px] font-bold ${
+                              isSelected ? 'bg-emerald-300 text-black' : isLightMode ? 'bg-zinc-200 text-zinc-700' : 'bg-white/8 text-white/70'
+                            }`}>
+                              {athlete.firstName[0]}{athlete.lastName[0]}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[11px] font-bold">{athlete.firstName} {athlete.lastName}</span>
+                              <span className={`mt-0.5 block truncate text-[8px] ${labelTextStyle}`}>
+                                {messages.length ? `${messages.length} message${messages.length > 1 ? 's' : ''}` : 'Aucun message'}
+                              </span>
+                            </span>
+                            {unreadCount > 0 && (
+                              <span className="flex h-5 min-w-5 items-center justify-center bg-emerald-400 px-1 text-[9px] font-bold text-black">
+                                {unreadCount}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </aside>
+
+                  <section className="flex min-w-0 flex-col">
+                    {selectedChatAthlete ? (
+                      <>
+                        <header className={`flex items-center justify-between gap-4 border-b px-4 py-4 sm:px-6 ${
+                          isLightMode ? 'border-zinc-200 bg-white' : 'border-white/5 bg-[#111111]'
+                        }`}>
+                          <div className="min-w-0">
+                            <div className={`truncate text-sm font-bold ${headingStyle}`}>
+                              {selectedChatAthlete.firstName} {selectedChatAthlete.lastName}
+                            </div>
+                            <div className={`mt-1 truncate text-[9px] font-mono ${labelTextStyle}`}>{selectedChatAthlete.email}</div>
+                          </div>
+                          <span className={`shrink-0 border px-2 py-1 text-[8px] uppercase tracking-widest ${
+                            hasPendingChatMessage
+                              ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-500'
+                              : isLightMode
+                                ? 'border-zinc-200 text-zinc-500'
+                                : 'border-white/10 text-white/40'
+                          }`}>
+                            {hasPendingChatMessage ? 'Réponse attendue' : 'Conversation active'}
+                          </span>
+                        </header>
+
+                        <div className={`flex-1 space-y-5 overflow-y-auto p-4 sm:p-6 ${
+                          isLightMode ? 'bg-[#f7f7f7]' : 'bg-black/15'
+                        }`} id="admin-athlete-chat-thread">
+                          {selectedChatMessages.length === 0 && (
+                            <div className={`flex min-h-72 items-center justify-center text-center text-xs ${subTextStyle}`}>
+                              Cet athlète n’a pas encore démarré de conversation.
+                            </div>
+                          )}
+
+                          {selectedChatMessages.map(message => (
+                            <div key={message.id} className="space-y-3">
+                              <div className={`max-w-[88%] border p-4 text-sm leading-6 sm:max-w-[76%] ${
+                                isLightMode
+                                  ? 'border-zinc-200 bg-white text-zinc-800'
+                                  : 'border-white/8 bg-[#181818] text-white/75'
+                              }`}>
+                                <div className={`mb-2 text-[8px] uppercase tracking-widest ${labelTextStyle}`}>
+                                  {selectedChatAthlete.firstName} · {message.date}
+                                </div>
+                                {message.message}
+                              </div>
+
+                              {(message.replies || (
+                                message.reply
+                                  ? [{ id: `${message.id}_legacy`, message: message.reply, date: message.repliedAt || message.date }]
+                                  : []
+                              )).map(reply => (
+                                <div key={reply.id} className={`ml-auto max-w-[88%] p-4 text-sm leading-6 sm:max-w-[76%] ${
+                                  isLightMode ? 'bg-zinc-950 text-white' : 'bg-emerald-300 text-black'
+                                }`}>
+                                  <div className={`mb-2 text-[8px] uppercase tracking-widest ${
+                                    isLightMode ? 'text-white/45' : 'text-black/45'
+                                  }`}>
+                                    Admin · {reply.date}
+                                  </div>
+                                  {reply.message}
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+
+                        <form onSubmit={handleChatReply} className={`border-t p-4 sm:p-5 ${
+                          isLightMode ? 'border-zinc-200 bg-white' : 'border-white/5 bg-[#111111]'
+                        }`}>
+                          <div className="flex gap-3">
+                            <textarea
+                              value={chatReply}
+                              onChange={(event) => setChatReply(event.target.value)}
+                              placeholder={latestChatMessage ? `Écrire à ${selectedChatAthlete.firstName}...` : 'La conversation démarrera après son premier message'}
+                              disabled={!latestChatMessage}
+                              className={`min-h-20 flex-1 resize-none border p-3 text-xs outline-none disabled:cursor-not-allowed disabled:opacity-55 ${inputStyle}`}
+                            />
+                            <button
+                              type="submit"
+                              disabled={!latestChatMessage || !chatReply.trim()}
+                              className="flex w-14 shrink-0 items-center justify-center bg-emerald-300 text-black transition-colors hover:bg-emerald-200 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
+                              aria-label="Envoyer la réponse à l’athlète"
+                            >
+                              <Send className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </form>
+                      </>
+                    ) : (
+                      <div className={`flex min-h-96 items-center justify-center text-xs ${subTextStyle}`}>Aucun athlète disponible.</div>
+                    )}
+                  </section>
+                </div>
+              </div>
+            )}
+
+            {/* CLIENT CONCIERGERIE / CLIENT MESSAGES */}
             {activeTab === 'contacts' && (
               <div className="space-y-6 animate-fade-in" id="workspace-contacts">
                 <div className="space-y-1">
@@ -940,45 +1253,49 @@ export const Admin: React.FC = () => {
                         </p>
                       </div>
 
-                      {/* Response state */}
-                      {msg.status === 'answered' ? (
-                        <div className={`p-4 space-y-2 border ${
-                          isLightMode ? 'bg-emerald-50 border-emerald-250 text-emerald-950' : 'bg-emerald-950/10 border-emerald-900/20 text-[#22c55e]'
+                      {(msg.replies || (
+                        msg.reply
+                          ? [{ id: `${msg.id}_legacy`, message: msg.reply, date: msg.repliedAt || msg.date }]
+                          : []
+                      )).map(reply => (
+                        <div key={reply.id} className={`p-4 space-y-2 border ${
+                          isLightMode ? 'bg-emerald-50 border-emerald-200 text-emerald-950' : 'bg-emerald-950/10 border-emerald-900/20 text-[#22c55e]'
                         }`}>
                           <div className="flex justify-between items-center text-[8.5px] font-mono tracking-wider font-bold uppercase">
                             <span>// RÉPONSE ENREGISTRÉE</span>
-                            <span>{msg.repliedAt}</span>
+                            <span>{reply.date}</span>
                           </div>
                           <p className={`text-xs font-light font-sans leading-relaxed ${isLightMode ? 'text-zinc-900' : 'text-white/80'}`}>
-                            {msg.reply}
+                            {reply.message}
                           </p>
                         </div>
-                      ) : (
-                        <div className="space-y-3 pt-2">
-                          <label className={`text-[8.5px] font-mono block uppercase tracking-widest ${labelTextStyle}`}>RÉPONDRE DE L'ÉQUIPE ET RECALER L'ATHLÈTE :</label>
-                          <div className={`flex border p-2.5 transition-colors focus-within:ring-1 ${
-                            isLightMode ? 'bg-zinc-100 border-zinc-300 focus-within:border-zinc-800' : 'bg-[#141414] border-white/10 focus-within:border-white'
-                          }`}>
-                            <textarea
-                              value={replyText[msg.id] || ''}
-                              onChange={(e) => setReplyText(prev => ({ ...prev, [msg.id]: e.target.value }))}
-                              placeholder="Rédigez la réponse d'adaptation diététique (ex: Bonjour Teddy, nous avons modifié la ration culinaire...)"
-                              className={`w-full bg-transparent text-xs outline-none font-sans resize-none h-16 leading-relaxed ${
-                                isLightMode ? 'text-zinc-950 placeholder-zinc-400' : 'text-white placeholder-zinc-500'
-                              }`}
-                            />
-                          </div>
-                          <div className="flex justify-end pt-1">
-                            <button
-                              onClick={() => handleSendReply(msg.id)}
-                              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-sans text-[10px] font-bold tracking-widest uppercase transition-colors flex items-center space-x-1.5 shrink-0 cursor-none"
-                            >
-                              <Send className="w-3.5 h-3.5" />
-                              <span>ENVOYER RÉPONSE</span>
-                            </button>
-                          </div>
+                      ))}
+
+                      <div className="space-y-3 pt-2">
+                        <label className={`text-[8.5px] font-mono block uppercase tracking-widest ${labelTextStyle}`}>ÉCRIRE UNE NOUVELLE RÉPONSE :</label>
+                        <div className={`flex border p-2.5 transition-colors focus-within:ring-1 ${
+                          isLightMode ? 'bg-zinc-100 border-zinc-300 focus-within:border-zinc-800' : 'bg-[#141414] border-white/10 focus-within:border-white'
+                        }`}>
+                          <textarea
+                            value={replyText[msg.id] || ''}
+                            onChange={(e) => setReplyText(prev => ({ ...prev, [msg.id]: e.target.value }))}
+                            placeholder={`Écrire à ${msg.name}...`}
+                            className={`w-full bg-transparent text-xs outline-none font-sans resize-none h-16 leading-relaxed ${
+                              isLightMode ? 'text-zinc-950 placeholder-zinc-400' : 'text-white placeholder-zinc-500'
+                            }`}
+                          />
                         </div>
-                      )}
+                        <div className="flex justify-end pt-1">
+                          <button
+                            onClick={() => handleSendReply(msg.id)}
+                            disabled={!replyText[msg.id]?.trim()}
+                            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-sans text-[10px] font-bold tracking-widest uppercase transition-colors flex items-center space-x-1.5 shrink-0 cursor-none disabled:cursor-not-allowed disabled:bg-zinc-500 disabled:text-zinc-300"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>ENVOYER RÉPONSE</span>
+                          </button>
+                        </div>
+                      </div>
 
                     </div>
                   ))}

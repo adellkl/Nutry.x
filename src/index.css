@@ -104,6 +104,43 @@
   }
 }
 
+/* Keep light call-to-action surfaces readable across every view. */
+button[class~="bg-white"],
+a[class~="bg-white"],
+[role="button"][class~="bg-white"],
+button[class~="bg-zinc-100"],
+a[class~="bg-zinc-100"],
+[role="button"][class~="bg-zinc-100"] {
+  color: #09090b;
+}
+
+button[class~="hover:bg-white"]:hover,
+a[class~="hover:bg-white"]:hover,
+[role="button"][class~="hover:bg-white"]:hover,
+button[class~="hover:bg-zinc-100"]:hover,
+a[class~="hover:bg-zinc-100"]:hover,
+[role="button"][class~="hover:bg-zinc-100"]:hover {
+  color: #09090b;
+}
+
+button[class~="bg-white"][class~="hover:bg-transparent"]:hover,
+a[class~="bg-white"][class~="hover:bg-transparent"]:hover,
+[role="button"][class~="bg-white"][class~="hover:bg-transparent"]:hover,
+button[class~="bg-white"][class~="hover:bg-black"]:hover,
+a[class~="bg-white"][class~="hover:bg-black"]:hover,
+[role="button"][class~="bg-white"][class~="hover:bg-black"]:hover {
+  color: #ffffff;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.45);
+  outline-offset: 2px;
+}
+
 /* Responsive hardening for the highly editorial layout */
 #hero-title {
   font-size: clamp(3rem, 13vw, 8rem);

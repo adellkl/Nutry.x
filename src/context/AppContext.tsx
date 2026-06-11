@@ -8,6 +8,7 @@ import { CartItem, UserAthleteProfile, SportsGoal, CustomDishCombination, MenuIt
 import { BASE_OPTIONS, PROTEIN_OPTIONS, SAUCE_OPTIONS, GARNISH_OPTIONS, SIGNATURE_DISHES } from '../data';
 
 export type ViewType = 'accueil' | 'panier' | 'profil' | 'contact' | 'information' | 'admin';
+export type SessionRole = 'athlete' | 'admin';
 
 interface AppContextType {
   activeView: ViewType;
@@ -22,7 +23,9 @@ interface AppContextType {
   completedOrders: AthleteOrder[];
   placeOrder: () => { success: boolean; orderId: string };
   isLoggedIn: boolean;
-  loginUser: (email: string, pass: string) => { success: boolean; error?: string };
+  isAdmin: boolean;
+  sessionRole: SessionRole | null;
+  loginUser: (email: string, pass: string, role?: SessionRole) => { success: boolean; error?: string };
   registerUser: (firstName: string, lastName: string, email: string, pass: string) => { success: boolean; error?: string };
   logoutUser: () => void;
 
@@ -233,6 +236,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem('nutryx_is_logged_in') === 'true';
   });
+  const [sessionRole, setSessionRole] = useState<SessionRole | null>(() => {
+    const savedRole = localStorage.getItem('nutryx_session_role');
+    return savedRole === 'admin' || savedRole === 'athlete'
+      ? savedRole
+      : localStorage.getItem('nutryx_is_logged_in') === 'true'
+        ? 'athlete'
+        : null;
+  });
+  const isAdmin = isLoggedIn && sessionRole === 'admin' && profile.email === 'kevin.loukal@eliteathletics.fr';
 
   // Dynamic state loaded or saved on local storage
   const [dishes, setDishes] = useState<MenuItem[]>(() => {
@@ -320,6 +332,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const setActiveView = (view: ViewType) => {
+    if (view === 'admin' && !isAdmin) {
+      setActiveViewState('profil');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     setActiveViewState(view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -391,16 +408,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Login action with logs
-  const loginUser = (email: string, pass: string) => {
+  const loginUser = (email: string, pass: string, role: SessionRole = 'athlete') => {
     const usersStr = localStorage.getItem('nutryx_users');
     const users = usersStr ? JSON.parse(usersStr) : {};
     
     const normalizedEmail = email.toLowerCase().trim();
+
+    if (role === 'admin') {
+      if (normalizedEmail !== 'kevin.loukal@eliteathletics.fr' || pass !== 'kevin123') {
+        addAdminLog('user', 'Tentative refusée sur la console administrateur', normalizedEmail);
+        return { success: false, error: 'Accès administrateur réservé à Kevin Loukal.' };
+      }
+
+      const adminProfile = athletes.find(a => a.email === normalizedEmail) || defaultProfile;
+      setProfile(adminProfile);
+      setIsLoggedIn(true);
+      setSessionRole('admin');
+      localStorage.setItem('nutryx_is_logged_in', 'true');
+      localStorage.setItem('nutryx_session_role', 'admin');
+      localStorage.setItem('nutryx_profile', JSON.stringify(adminProfile));
+      addAdminLog('admin', 'Ouverture sécurisée de la console administrateur', normalizedEmail);
+      setActiveViewState('admin');
+      return { success: true };
+    }
     
     // Check local hardcoded or seed accounts
-    if (normalizedEmail === 'kevin.loukal@eliteathletics.fr' || normalizedEmail === 'adelloukal2@gmail.com') {
+    const seedPassword =
+      normalizedEmail === 'kevin.loukal@eliteathletics.fr'
+        ? 'kevin123'
+        : normalizedEmail === 'adelloukal2@gmail.com'
+          ? 'adel123'
+          : null;
+
+    if (seedPassword) {
+      if (pass !== seedPassword) {
+        return { success: false, error: 'Mot de passe incorrect.' };
+      }
       setIsLoggedIn(true);
+      setSessionRole('athlete');
       localStorage.setItem('nutryx_is_logged_in', 'true');
+      localStorage.setItem('nutryx_session_role', 'athlete');
       
       let customProfile = athletes.find(a => a.email === normalizedEmail);
       if (!customProfile) {
@@ -423,7 +470,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (users[normalizedEmail]) {
       if (users[normalizedEmail].password === pass) {
         setIsLoggedIn(true);
+        setSessionRole('athlete');
         localStorage.setItem('nutryx_is_logged_in', 'true');
+        localStorage.setItem('nutryx_session_role', 'athlete');
         
         const userProfile = users[normalizedEmail].profile;
         setProfile(userProfile);
@@ -477,7 +526,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('nutryx_users', JSON.stringify(users));
     
     setIsLoggedIn(true);
+    setSessionRole('athlete');
     localStorage.setItem('nutryx_is_logged_in', 'true');
+    localStorage.setItem('nutryx_session_role', 'athlete');
     setProfile(recalculatedProfile);
     localStorage.setItem('nutryx_profile', JSON.stringify(recalculatedProfile));
 
@@ -492,7 +543,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logoutUser = () => {
     addAdminLog('user', `Fermeture de session de l'athlète : ${profile.firstName}`, profile.email);
     setIsLoggedIn(false);
+    setSessionRole(null);
     localStorage.removeItem('nutryx_is_logged_in');
+    localStorage.removeItem('nutryx_session_role');
     setProfile(defaultProfile);
     localStorage.removeItem('nutryx_profile');
     setActiveViewState('accueil');
@@ -647,19 +700,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const replyToMessage = (id: string, replyText: string) => {
+    const repliedAt = new Date().toLocaleString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
     setContactMessages(prev => prev.map(m => {
       if (m.id === id) {
+        const previousReplies = m.replies || (
+          m.reply
+            ? [{ id: `${m.id}_legacy`, message: m.reply, date: m.repliedAt || m.date }]
+            : []
+        );
+
         return {
           ...m,
           status: 'answered',
           reply: replyText,
-          repliedAt: new Date().toLocaleString('fr-FR', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })
+          repliedAt,
+          replies: [
+            ...previousReplies,
+            {
+              id: `reply_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+              message: replyText,
+              date: repliedAt
+            }
+          ]
         };
       }
       return m;
@@ -709,6 +778,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       completedOrders,
       placeOrder,
       isLoggedIn,
+      isAdmin,
+      sessionRole,
       loginUser,
       registerUser,
       logoutUser,

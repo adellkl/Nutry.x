@@ -287,7 +287,7 @@ export const Cart: React.FC = () => {
                   </div>
 
                   <div className="w-full lg:w-auto space-y-3.5">
-                    <div className="flex flex-col min-[420px]:flex-row bg-black border border-white/10 hover:border-white/20 focus-within:border-emerald-500/55 transition-all duration-300 rounded-none overflow-hidden max-w-sm w-full lg:min-w-[320px]">
+                    <div className="flex flex-col min-[420px]:flex-row bg-black border border-white/10 hover:border-white/20 focus-within:border-white/35 transition-all duration-300 rounded-none overflow-hidden max-w-sm w-full lg:min-w-[320px]">
                       <input
                         type="text"
                         value={promoCode}
